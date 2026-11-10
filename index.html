@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Sevak's Minecraft World — 3D Architecture, Parkour &amp; AI Challenges</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Three.js 3D WebGL Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- 3D WebGL World Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Center Crosshair (Shown in Mouse-Look Lock or Mobile Touch Mode) -->
+  <div id="center-crosshair" class="hidden">+</div>
+
+  <!-- WELCOME HERO LAUNCH MODAL -->
+  <div id="welcome-modal">
+    <div class="welcome-card">
+      <div class="welcome-badge">☁️ SEVAK'S GOOGLE CLOUD &amp; VERTEX AI EDITION</div>
+      <h1 class="welcome-title">👑 SEVAK'S MINECRAFT WORLD</h1>
+      <p class="welcome-subtitle">Master 3D Architecture, Conquer Parkour &amp; Timed Build Challenges, Command Sevak-Bot AI &amp; Unlock the Armory!</p>
+
+      <div class="welcome-name-box">
+        <label for="welcome-name-input">🏛️ 3D MONUMENT SIGN:</label>
+        <input id="welcome-name-input" type="text" maxlength="10" value="SEVAK" placeholder="SEVAK" />
+        <div class="welcome-name-chips">
+          <button type="button" class="name-chip active" data-name="SEVAK">👑 SEVAK</button>
+          <button type="button" class="name-chip" data-name="FORT SEVAK">🏰 FORT SEVAK</button>
+          <button type="button" class="name-chip" data-name="SEVAK HQ">⚡ SEVAK HQ</button>
+          <button type="button" class="name-chip" data-name="KING SEVAK">🦖 KING SEVAK</button>
+          <button type="button" class="name-chip" data-name="TEAM SEVAK">💎 TEAM SEVAK</button>
+        </div>
+      </div>
+
+      <button id="btn-start-game" class="welcome-play-btn">
+        ⚔️ ENTER SEVAK'S WORLD &amp; START CHALLENGES!
+      </button>
+
+      <div class="welcome-tips">
+        <span>📱 <b>Phone / iPad:</b> Left Thumbstick or Tap Ground to Move • Drag to Look</span>
+        <span>💻 <b>Laptop:</b> WASD / Arrows to Move • Click to Build • Climb Y=10 Tower for Coins</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Status Notification Banner -->
+  <div id="kid-toast">👑 Welcome to Sevak's Minecraft World! Complete Challenges &amp; Climb Towers to Earn Coins!</div>
+
+  <!-- Floating +Coins & Achievement Kudos Popups -->
+  <div id="dopamine-layer"></div>
+
+  <!-- Celebratory Rank-Up & Challenge Victory Card -->
+  <div id="dopamine-celebration-card" class="hidden">
+    <div id="cel-emoji" class="cel-emoji">🏆</div>
+    <div class="cel-body">
+      <div id="cel-title" class="cel-title">RANK UP! LEVEL 2: FIELD ENGINEER!</div>
+      <div id="cel-sub" class="cel-sub">Challenge conquered! New Armory gear available!</div>
+    </div>
+  </div>
+
+  <!-- TOP HUD: Sevak Branding, Earned Coins, Rank/XP Bar, Timed Challenge Timer & Quick Controls -->
+  <header id="top-hud">
+    <div class="hud-card" id="brand-hud-card">
+      <span style="font-size: 20px;">👑</span>
+      <div>
+        <div class="brand-title">SEVAK'S MINECRAFT</div>
+        <div class="xp-bar-wrap" title="Complete Challenges, Parkour Climbs & Engineering Milestones to Rank Up!">
+          <span id="hud-level-badge">🏆 LVL 1 • Scout Builder</span>
+          <div class="xp-track"><div id="hud-xp-fill" class="xp-fill" style="width: 8%;"></div></div>
+        </div>
+      </div>
+      <button id="coin-bank-pill" class="coin-pill" title="Coins are earned by completing challenges, climbing rooftops & hitting 25-block milestones!">
+        🪙 <span id="hud-coin-count">0</span>
+      </button>
+      <div id="challenge-timer-pill" class="streak-pill hidden">⏱️ 30s</div>
+      <div id="hud-streak-pill" class="streak-pill hidden">🔥 25-Block Streak!</div>
+      <div class="stat-pill hide-on-small" title="Hand-Crafted Blocks (Every 25 earns +25 Coins!)">🧱 <span id="hud-block-count">0</span></div>
+      <div id="save-status-pill" class="stat-pill hide-on-small" style="color: #4ade80;" title="Synced with Google Cloud Backend">☁️ GCP</div>
+    </div>
+
+    <!-- 3D Monument Sign Builder -->
+    <div class="hud-card" id="name-builder-bar">
+      <span style="font-size: 12px; font-weight: 900; color: #fde68a;">🏛️ Sign:</span>
+      <input id="kid-name-input" type="text" maxlength="10" value="SEVAK" placeholder="SEVAK" />
+      <button id="btn-build-name" class="kid-btn gold">💎 Build 3D Sign</button>
+    </div>
+
+    <!-- Timed Challenge, Sevak-Bot AI, Undo, Fly, Ride & Camera Controls -->
+    <div class="hud-card" id="top-quick-actions">
+      <button id="btn-start-challenge" class="kid-btn red" title="Start a 30-Second Speed-Build or Parkour Coin Challenge!">⚔️ Challenge</button>
+      <button id="btn-surprise-wow" class="kid-btn gold hide-on-small" title="Deploy a Sevak-Bot Mega Structure with Rooftop Treasure!">🌟 Mega Build</button>
+      <button id="btn-voice-cmd" class="kid-btn purple" title="Command Sevak-Bot AI on Google Cloud!">🎙️ AI</button>
+      <button id="btn-undo" class="kid-btn gold" title="Shortcut: Z">↩️ Undo</button>
+      <button id="btn-fly" class="kid-btn cyan" title="Shortcut: F (Disabled during climbing challenges)">🚀 Fly</button>
+      <button id="btn-ride" class="kid-btn green" title="Shortcut: R">🦖 Ride</button>
+      <button id="btn-camera" class="kid-btn" title="Switch 1st / 3rd Person View (V)">🎥 View</button>
+      <button id="btn-mouselook" class="kid-btn hide-on-small" title="Shortcut: L">🎯 Mouse Look</button>
+      <button id="btn-fireworks" class="kid-btn gold">🎆</button>
+      <button id="btn-voice-toggle" class="kid-btn hide-on-small">🗣️ Voice ON</button>
+      <button id="btn-mute" class="kid-btn">🔊</button>
+      <button id="toggle-lab-btn" class="kid-btn green hide-on-small">➖ Hide</button>
+    </div>
+
+    <!-- 1-TAP "GO TO PLACE" QUICK-TRAVEL BAR -->
+    <div id="quick-travel-bar">
+      <span class="travel-label">🗺️ Go To:</span>
+      <button class="travel-pill" data-goto="parkour-tower">🏔️ Parkour Tower</button>
+      <button class="travel-pill" data-goto="house-door">🚪 Sevak's Base</button>
+      <button class="travel-pill" data-goto="inside-house">🛋️ Base Interior</button>
+      <button class="travel-pill" data-goto="ride-trex">🦖 Ride T-Rex</button>
+      <button class="travel-pill" data-goto="trampoline">🟢 Jump Pad</button>
+    </div>
+
+    <!-- MOBILE / IPHONE QUICK DRAWER TABS -->
+    <div id="mobile-drawer-bar">
+      <button id="mob-tab-build" class="mob-tab-btn" data-drawer="tech-lab-panel">🏗️ Sevak Lab</button>
+      <button id="mob-tab-shop" class="mob-tab-btn" data-drawer="upgrade-shop-card">⚡ Armory</button>
+      <button id="mob-tab-quests" class="mob-tab-btn" data-drawer="quest-sticker-card">⚔️ Challenges</button>
+      <button id="mob-tab-wow" class="mob-tab-btn wow-tab">⏱️ Blitz!</button>
+    </div>
+  </header>
+
+  <!-- TOP-LEFT HUD: Sevak's 6 Master Challenges & Timed Blitz Modes -->
+  <aside id="quest-sticker-card">
+    <div class="drawer-close-row">
+      <span>⚔️ SEVAK'S CHALLENGES</span>
+      <button class="drawer-close-btn" type="button">✖️ Done</button>
+    </div>
+    <div class="quest-header">
+      <span>⚔️ MASTER CHALLENGES</span>
+      <span id="quest-star-total">0 / 6 🏆</span>
+    </div>
+    <div class="quest-sub">Earn Coins through real skill, speed &amp; parkour!</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 7px;">
+      <button id="btn-challenge-build" class="kid-btn red" style="font-size: 10.5px; padding: 5px 6px; justify-content: center;" title="Build 25 blocks in 30 seconds for +100 Coins!">⏱️ 30s Build Blitz</button>
+      <button id="btn-challenge-coins" class="kid-btn gold" style="font-size: 10.5px; padding: 5px 6px; justify-content: center;" title="Collect 8 parkour coins in 35 seconds for +90 Coins!">🏃 35s Coin Rush</button>
+    </div>
+    <div id="quest-list">
+      <div class="quest-item" data-quest="mason40">
+        <span class="quest-star">☆</span>
+        <span id="q-label-mason40">🧱 Master Mason (0/40 Blocks) • +60🪙</span>
+      </div>
+      <div class="quest-item" data-quest="climber10">
+        <span class="quest-star">☆</span>
+        <span id="q-label-climber10">🏔️ Sky Climber (Reach Y=10 No-Fly) • +75🪙</span>
+      </div>
+      <div class="quest-item" data-quest="speedblitz">
+        <span class="quest-star">☆</span>
+        <span id="q-label-speedblitz">⏱️ Win a 30s Timed Blitz • +100🪙</span>
+      </div>
+      <div class="quest-item" data-quest="treasure12">
+        <span class="quest-star">☆</span>
+        <span id="q-label-treasure12">🪙 Treasure Hunter (0/12 Coins) • +80🪙</span>
+      </div>
+      <div class="quest-item" data-quest="trexroof">
+        <span class="quest-star">☆</span>
+        <span id="q-label-trexroof">🦖 T-Rex Roof Jump (Reach Y≥4) • +75🪙</span>
+      </div>
+      <div class="quest-item" data-quest="architect3">
+        <span class="quest-star">☆</span>
+        <span id="q-label-architect3">🏰 Empire Builder (0/3 Bases + 20 Blocks) • +100🪙</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MIDDLE-LEFT HUD: Sevak's Upgrade Armory (Unlocked with Earned Challenge Coins!) -->
+  <aside id="upgrade-shop-card">
+    <div class="drawer-close-row">
+      <span>⚡ SEVAK'S ARMORY</span>
+      <button class="drawer-close-btn" type="button">✖️ Done</button>
+    </div>
+    <div class="shop-header">
+      <span>⚡ SEVAK'S UPGRADE ARMORY</span>
+      <button id="btn-spawn-coins" class="kid-btn red" style="padding: 2px 7px; font-size: 10px;" title="Start a Timed Coin Rush Challenge to earn coins!">⚔️ Earn 🪙</button>
+    </div>
+    <div class="quest-sub">Complete challenges &amp; rooftop climbs to unlock gear!</div>
+    <div id="upgrade-shop-list" class="shop-grid">
+      <button class="upgrade-btn" data-upgrade="turboBoots" data-cost="60">
+        <span class="up-icon">⚡</span>
+        <div class="up-info">
+          <div class="up-name">Turbo Sprint Boots</div>
+          <div class="up-desc">1.8x Tactical Sprint Speed</div>
+        </div>
+        <span class="up-price">🪙 60</span>
+      </button>
+
+      <button class="upgrade-btn" data-upgrade="megaBrush" data-cost="100">
+        <span class="up-icon">🏰</span>
+        <div class="up-info">
+          <div class="up-name">5×5 Mega Builder</div>
+          <div class="up-desc">25-Block Engineering Brush</div>
+        </div>
+        <span class="up-price">🪙 100</span>
+      </button>
+
+      <button class="upgrade-btn" data-upgrade="goldenBot" data-cost="140">
+        <span class="up-icon">🤖</span>
+        <div class="up-info">
+          <div class="up-name">Golden Sevak-Bot 2.5x</div>
+          <div class="up-desc">Overclocked AI Laser Drone</div>
+        </div>
+        <span class="up-price">🪙 140</span>
+      </button>
+
+      <button class="upgrade-btn" data-upgrade="moonBounce" data-cost="180">
+        <span class="up-icon">🦘</span>
+        <div class="up-info">
+          <div class="up-name">Gravity Jump Boots</div>
+          <div class="up-desc">3x High Parkour Roof Leap</div>
+        </div>
+        <span class="up-price">🪙 180</span>
+      </button>
+
+      <button class="upgrade-btn" data-upgrade="kingCrown" data-cost="220">
+        <span class="up-icon">👑</span>
+        <div class="up-info">
+          <div class="up-name">Sevak's Royal Crown</div>
+          <div class="up-desc">3D Gold Crown &amp; Trail</div>
+        </div>
+        <span class="up-price">🪙 220</span>
+      </button>
+
+      <button class="upgrade-btn" data-upgrade="coinMagnet" data-cost="260">
+        <span class="up-icon">🧲</span>
+        <div class="up-info">
+          <div class="up-name">Treasure Magnet Field</div>
+          <div class="up-desc">Auto-Pull High-Altitude Coins</div>
+        </div>
+        <span class="up-price">🪙 260</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- RIGHT PANEL: Sevak-Bot Google Cloud Vertex AI Architect, Fortress Blueprints & Live Code Lab -->
+  <aside id="tech-lab-panel">
+    <div class="drawer-close-row">
+      <span>🏗️ SEVAK'S AI ARCHITECT LAB</span>
+      <button class="drawer-close-btn" type="button">✖️ Done</button>
+    </div>
+    <!-- 0. Google Cloud Vertex AI 3D Architect -->
+    <div class="lab-section">
+      <div class="lab-section-title">
+        <span>☁️ Sevak-Bot Cloud AI Architect</span>
+        <span id="voice-transcript-pill" style="font-size: 10.5px; color: #38bdf8;">🤖 Sevak-Bot Ready!</span>
+      </div>
+      <div style="display: flex; gap: 5px; margin-bottom: 6px;">
+        <input
+          id="cloud-ai-prompt-input"
+          type="text"
+          maxlength="80"
+          placeholder="Ask Sevak-Bot: Dragon keep, Mecha..."
+          style="flex: 1; background: rgba(15,23,42,0.85); color: #fff; border: 2px solid #38bdf8; border-radius: 10px; padding: 5px 8px; font-size: 11.5px; font-weight: 800; outline: none;"
+        />
+        <button id="btn-cloud-ai-build" class="kid-btn cyan" style="padding: 5px 10px;">✨ AI Build</button>
+      </div>
+      <div class="lab-grid-3">
+        <button class="kid-btn voice-chip" data-voice="Build a Pirate Ship">🏴‍☠️ Galleon</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Fire Station">🚒 Rescue HQ</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Giant Robot">🤖 Mecha-Titan</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Pizza Shop">🍕 Arcade HQ</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Golden Pyramid">🏜️ Pyramid</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Soccer Stadium">⚽ Arena</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Rollercoaster">🎢 Sky Coaster</button>
+        <button class="kid-btn voice-chip" data-voice="Build a Dragon Castle">🐉 Dragon Keep</button>
+        <button id="btn-lab-surprise" class="kid-btn gold">🌟 Mega Build</button>
+      </div>
+    </div>
+
+    <!-- 1. Walkable Fortresses, Sky Bridges & Space Rocket (Spawns Rooftop Treasure Coins to Climb!) -->
+    <div class="lab-section">
+      <div class="lab-section-title">
+        <span>🏰 Sevak's Base Blueprints</span>
+        <span style="font-size: 10.5px; color: #fde68a;">🪙 Climb Roof for Coins!</span>
+      </div>
+      <div class="lab-grid-2">
+        <button id="build-cozy-house-btn" class="kid-btn red">🏡 Sevak's Brick Base</button>
+        <button id="build-villa-btn" class="kid-btn cyan">🏠 Glass Pool HQ</button>
+        <button id="build-treehouse-btn" class="kid-btn green">🌲 Sky Treehouse</button>
+        <button id="build-castle-btn" class="kid-btn purple">🏰 Sevak's Fortress</button>
+        <button id="build-rainbow-btn" class="kid-btn gold">🌈 Parkour Sky Bridge</button>
+        <button id="launch-rocket-btn" class="kid-btn red">🚀 Launch Rocket!</button>
+        <button id="clear-lot-btn" class="kid-btn" style="justify-content: center;">🧹 Clear Build Lot</button>
+        <button id="btn-reset-village" class="kid-btn" style="justify-content: center;">🔄 Reset World</button>
+      </div>
+    </div>
+
+    <!-- 2. Spawn & Ride Companions & Giant T-Rex -->
+    <div class="lab-section">
+      <div class="lab-section-title">
+        <span>🦖 Spawn Mounts &amp; Companions</span>
+      </div>
+      <div class="lab-grid-4">
+        <button class="kid-btn spawn-mob-btn" data-mob="wolf">🐺 Wolf</button>
+        <button class="kid-btn spawn-mob-btn" data-mob="pig">🐗 Boar</button>
+        <button class="kid-btn spawn-mob-btn" data-mob="chicken">🦅 Falcon</button>
+        <button class="kid-btn spawn-mob-btn green" data-mob="trex">🦖 T-Rex</button>
+      </div>
+    </div>
+
+    <!-- 3. Weather, Sky & Physics Code -->
+    <div class="lab-section">
+      <div class="lab-section-title">
+        <span>🌦️ Environment &amp; Gravity Engine</span>
+      </div>
+
+      <div class="lab-grid-4" style="margin-bottom: 7px;">
+        <button class="kid-btn weather-btn active" data-weather="clear" style="padding: 5px; justify-content: center;" title="Clear Day">☀️</button>
+        <button class="kid-btn weather-btn" data-weather="snow" style="padding: 5px; justify-content: center;" title="Blizzard">❄️</button>
+        <button class="kid-btn weather-btn" data-weather="rain" style="padding: 5px; justify-content: center;" title="Thunderstorm">🌧️</button>
+        <button class="kid-btn weather-btn" data-weather="fireflies" style="padding: 5px; justify-content: center;" title="Ember Sparks">✨</button>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>🌙 Gravity Level</span>
+          <span id="val-gravity" class="slider-val">🌍 1.0G</span>
+        </div>
+        <input id="slider-gravity" type="range" min="0.25" max="1.0" step="0.25" value="1.0" />
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>⚡ Sprint Multiplier</span>
+          <span id="val-speed" class="slider-val">1.0x</span>
+        </div>
+        <input id="slider-speed" type="range" min="0.8" max="2.4" step="0.2" value="1.0" />
+      </div>
+
+      <div class="lab-grid-4" style="margin-top: 6px;">
+        <button class="kid-btn theme-btn active" data-theme="day" style="padding: 5px; justify-content: center;" title="Day">🌤️</button>
+        <button class="kid-btn theme-btn" data-theme="sunset" style="padding: 5px; justify-content: center;" title="Dusk">🌅</button>
+        <button class="kid-btn theme-btn" data-theme="space" style="padding: 5px; justify-content: center;" title="Deep Space">🌌</button>
+        <button class="kid-btn theme-btn" data-theme="candy" style="padding: 5px; justify-content: center;" title="Cyber Neon">⚡</button>
+      </div>
+    </div>
+
+    <!-- 4. Live Sevak-Bot Code Telemetry -->
+    <div id="live-code-card">
+      <div class="code-badge" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>💻 SEVAK-BOT ENGINE CODE:</span>
+        <button id="btn-read-code" class="kid-btn green" style="padding: 2px 8px; font-size: 10.5px;">🔊 Speak</button>
+      </div>
+      <div id="live-code-display">
+        <div class="visual-code-line">
+          <span class="vc-actor">🤖 SEVAK_BOT</span>.<span class="vc-verb">initWorld</span>(
+          <span class="vc-arg">"👑 SEVAK_EMPIRE"</span>
+          )
+        </div>
+      </div>
+      <div id="live-code-explain">
+        ⚔️ Climb the 10-Block Parkour Tower or hit ⚔️ Challenge to earn Gold Coins!
+      </div>
+    </div>
+  </aside>
+
+  <!-- BOTTOM-LEFT: 360° Touch Virtual Analog Thumbstick + Directional Tap Ring + Auto-Walk & Jump/Fly! -->
+  <div id="arcade-pad">
+    <div id="joystick-zone" title="Drag thumbstick or tap arrows to walk & steer anywhere!">
+      <span class="joy-dir joy-up" id="pad-up">⬆️</span>
+      <span class="joy-dir joy-left" id="pad-left">⬅️</span>
+      <span class="joy-dir joy-right" id="pad-right">➡️</span>
+      <span class="joy-dir joy-down" id="pad-down">⬇️</span>
+      <div id="joystick-knob">🕹️</div>
+    </div>
+    <div class="pad-vert-btns">
+      <button id="pad-autowalk" class="pad-btn autowalk-btn" title="Tap to cruise forward hands-free while steering!">
+        <span>🏃 AUTO-WALK</span>
+      </button>
+      <button id="pad-jump" class="pad-btn" title="Jump / Fly Up (Spacebar)">
+        <span>🚀 JUMP / UP</span>
+      </button>
+      <button id="pad-land" class="pad-btn" title="Fly Down / Land (Shift)">
+        <span>⬇️ DOWN</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM-RIGHT: Big Right-Thumb Action Buttons for iPhone / iPad / Touch Gameplay -->
+  <div id="mobile-action-pad">
+    <button id="mob-act-walk" class="mob-action-btn walk-act" title="Walk Forward Step / Tap Ground to Walk Here!">
+      👣 WALK FORWARD
+    </button>
+    <button id="mob-act-build" class="mob-action-btn build-act" title="Place Block / Open Door / Sleep in Bed / Play Jukebox">
+      🧱 BUILD / USE
+    </button>
+    <div class="mob-action-row">
+      <button id="mob-act-break" class="mob-action-btn break-act" title="Smash Target Block">
+        ⛏️ SMASH
+      </button>
+      <button id="mob-act-ride" class="mob-action-btn ride-act" title="Ride Nearest Pet or T-Rex">
+        🦖 RIDE
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM CENTER: Smart House Builder Brushes + 12-Slot House & Fun Block Hotbar -->
+  <footer id="bottom-hud">
+    <div id="action-mode-bar">
+      <button id="mode-walk-btn" class="kid-btn cyan" title="Tap any spot on the ground to automatically walk there!">👣 Tap to Walk</button>
+      <button id="mode-build-btn" class="kid-btn green active">🧱 Build / Use</button>
+      <button id="mode-mine-btn" class="kid-btn red">⛏️ Smash</button>
+
+      <div class="divider"></div>
+
+      <span style="font-size: 12px; font-weight: 900; color: #fde68a;">Brush:</span>
+      <button class="kid-btn brush-btn active" data-brush="1x1">🟦 1x1</button>
+      <button class="kid-btn brush-btn cyan" data-brush="wall">🧱 Wall</button>
+      <button class="kid-btn brush-btn gold" data-brush="floor">🪵 3×3</button>
+      <button class="kid-btn brush-btn purple" data-brush="rainbow">🌈 Arch</button>
+      <button id="brush-mega5x5-btn" class="kid-btn brush-btn gold" data-brush="mega5x5" title="Unlock in the Super Upgrade Shop!">🏰 5×5 Mega</button>
+    </div>
+
+    <div id="hotbar"></div>
+  </footer>
+
+  <!-- Game Engine Modules -->
+  <script src="audio.js"></script>
+  <script src="textures.js"></script>
+  <script src="structures.js"></script>
+  <script src="entities.js"></script>
+  <script src="world.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
